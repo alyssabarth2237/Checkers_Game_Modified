@@ -294,25 +294,39 @@ class Node:
         numTotPts = 0
         myRepeatingMoves = False
 
+        # FIXME: HERE IS THE ERROR
+        maxColor = self.maxColor
+        minColor = ""
+        maxMoveDir = 0
+        minMoveDir = 0
+        if maxColor == "red":
+            minColor = "black"
+            maxMoveDir = redMoveDir
+            minMoveDir = blackMoveDir
+        else:
+            minColor = "red"
+            maxMoveDir = blackMoveDir
+            minMoveDir = redMoveDir
+        # ******************************
         if self.type == "min":
-            currColor = "red"
-            otherColor = "black"
+            currColor = maxColor
+            otherColor = minColor
             goalSign = 1
             repeatBaseVal = alphaMin + 1
             myRepeatingMoves = self.repeatingMovesMax
-            if redMoveDir == -1:
+            if maxMoveDir == -1:
                 firstRow = 7
                 lastRow = 0
             else:
                 firstRow = 0
                 lastRow = 7
         else:
-            currColor = "black"
-            otherColor = "red"
+            currColor = minColor
+            otherColor = maxColor
             goalSign = -1
             repeatBaseVal = betaMax - 1
             myRepeatingMoves = self.repeatingMovesMin
-            if blackMoveDir == 1:
+            if minMoveDir == 1:
                 firstRow = 0
                 lastRow = 7
             else:

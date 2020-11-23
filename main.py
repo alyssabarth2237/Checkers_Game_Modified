@@ -93,8 +93,12 @@ class CheckersGame(GridLayout):
         self.moveCount = 0
         self.alreadyCaptured = False
         self.isJumping = False
-        self.prevMove = dummyMove
-        self.prevPrevMove = dummyMove
+        self.prevMoveMax = dummyMove
+        self.prevPrevMoveMax = dummyMove
+        self.prevMoveMin = dummyMove
+        self.prevPrevMoveMin = dummyMove
+        self.tempCurrPtMin = Point(-1, -1)
+        self.tempCurrEndPtsMin = []
 
         #**************************
         self.redPiecePt = Point(-1, -1)
@@ -215,8 +219,10 @@ class CheckersGame(GridLayout):
         self.moveCount = 0
         self.alreadyCaptured = False
         self.isJumping = False
-        self.prevMove = dummyMove
-        self.prevPrevMove = dummyMove
+        self.prevMoveMax = dummyMove
+        self.prevPrevMoveMax = dummyMove
+        self.prevMoveMin = dummyMove
+        self.prevPrevMoveMin = dummyMove
 
         return
 
@@ -311,6 +317,12 @@ class CheckersGame(GridLayout):
                     if pt in self.lightSqrs:
                         # can select square
                         self.selectedSqr = pt
+
+                        if self.tempCurrPtMin == Point(-1, -1):
+                            self.tempCurrPtMin = self.selected
+                        self.tempCurrEndPtsMin.append(pt)
+
+
                         #set self.isJumping to true if jumping here
                         if abs(self.selectedSqr.x - self.selected.x) > 1:
                             #jumping
@@ -424,6 +436,10 @@ class CheckersGame(GridLayout):
                     self.pawnToKing()
                 self.isJumping = False  # multiple jumps are over so can select/deselect a piece again
                 if self.turn == "black":
+                    self.prevPrevMoveMin = self.prevMoveMin
+                    self.prevMoveMin = (self.tempCurrPtMin, self.tempCurrEndPtsMin)
+                    self.tempCurrPtMin = Point(-1, -1)
+                    self.tempCurrEndPtsMin = []
                     self.turn = "red"
                     print(" { Red's Turn }")
                     self.aiTurn()
@@ -470,8 +486,8 @@ class CheckersGame(GridLayout):
 
     def moveAI(self):
         if self.redPiecePt != Point(-1, -1):
-            self.prevPrevMove = self.prevMove
-            self.prevMove = (self.redPiecePt, deepcopy(self.redEndPts))
+            self.prevPrevMoveMax = self.prevMoveMax
+            self.prevMoveMax = (self.redPiecePt, deepcopy(self.redEndPts))
             endPt = self.redEndPts[0]
             if self.isJumping == False:
                 self.selectObj(self.redPiecePt)
@@ -520,19 +536,19 @@ class CheckersGame(GridLayout):
 
     def aiTurn(self):
         prevMoveStr = "[ "
-        for pt in self.prevMove[1]:
+        for pt in self.prevMoveMax[1]:
             prevMoveStr += pt.printStr()
-            if pt != self.prevMove[1][-1]:
+            if pt != self.prevMoveMax[1][-1]:
                 prevMoveStr += ", "
         prevMoveStr += " ]"
         prevPrevMoveStr = "[ "
-        for pt in self.prevPrevMove[1]:
+        for pt in self.prevPrevMoveMax[1]:
             prevPrevMoveStr += pt.printStr()
-            if pt != self.prevPrevMove[1][-1]:
+            if pt != self.prevPrevMoveMax[1][-1]:
                 prevPrevMoveStr += ", "
         prevPrevMoveStr += " ]"
-        print(f'prevMove: {self.prevMove[0].printStr()}  {prevMoveStr}    prevPrevMove: {self.prevPrevMove[0].printStr()}  {prevPrevMoveStr}')
-        tree = Tree(self.pieceGrid, self.prevMove, self.prevPrevMove)
+        print(f'prevMove: {self.prevMoveMax[0].printStr()}  {prevMoveStr}    prevPrevMove: {self.prevPrevMoveMax[0].printStr()}  {prevPrevMoveStr}')
+        tree = Tree(self.pieceGrid, self.prevMoveMax, self.prevPrevMoveMax, self.prevMoveMin, self.prevPrevMoveMin, "red")
         alpha = alphaMin
         beta = betaMax
         #FIXME: ADDED NORMAL AND RANDOM
