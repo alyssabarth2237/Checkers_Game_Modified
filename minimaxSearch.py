@@ -24,7 +24,7 @@ class Array:
         self.array = []
         for i in range(self.size):
             #parentIndIn, indIn, depthIn, typeIn, currPtIn, endPtsIn, boardIn, treeIn
-            self.array.append(Node(-1, -1, -1, "max", -1, [-1], [], self.array, dummyMove, dummyMove, False))
+            self.array.append(Node(-1, -1, -1, "max", -1, [-1], [], self.array, dummyMove, dummyMove, dummyMove, dummyMove, False, False, "None"))
 
     def add(self, ind, node):
         if ind < self.size:
@@ -34,7 +34,7 @@ class Array:
             #must grow array
             # print("Growing Array...")
             for i in range(self.size):
-                self.array.append(Node(-1, -1, -1, "max", -1, [-1], [], self.array, dummyMove, dummyMove, False))
+                self.array.append(Node(-1, -1, -1, "max", -1, [-1], [], self.array, dummyMove, dummyMove, dummyMove, dummyMove, False, False, "None"))
             self.size = self.size * 2
             self.array[ind] = node
         return
@@ -60,7 +60,7 @@ def copyBoard(boardIn):
     return newBoard
 
 class Node:
-    def __init__(self, parentIndIn, indIn, depthIn, typeIn, currPtIn, endPtsIn, boardIn, treeInst, prevMove, prevPrevMove, repeatingMoves):
+    def __init__(self, parentIndIn, indIn, depthIn, typeIn, currPtIn, endPtsIn, boardIn, treeInst, prevMoveMax, prevPrevMoveMax, prevMoveMin, prevPrevMoveMin, repeatingMovesMax, repeatingMovesMin, maxColorIn):
         #boardIn is the already updated board with the result of this node's move
         self.parentInd = parentIndIn
         self.ind = indIn
@@ -72,9 +72,13 @@ class Node:
         self.val = 0
         self.boardRslt = []
         self.visited = False
-        self.prevMove = prevMove
-        self.prevPrevMove = prevPrevMove
-        self.repeatingMoves = repeatingMoves
+        self.prevMoveMax = prevMoveMax
+        self.prevPrevMoveMax = prevPrevMoveMax
+        self.prevMoveMin = prevMoveMin
+        self.prevPrevMoveMin = prevPrevMoveMin
+        self.repeatingMovesMax = repeatingMovesMax
+        self.repeatingMovesMin = repeatingMovesMin
+        self.maxColor = maxColorIn
         if self.type == "max":
             self.val = alphaMin
         else:
@@ -288,12 +292,14 @@ class Node:
         numMyPts = 0
         numOppntPts = 0
         numTotPts = 0
+        myRepeatingMoves = False
 
         if self.type == "min":
             currColor = "red"
             otherColor = "black"
             goalSign = 1
-            repeatBaseVal = alphaMin
+            repeatBaseVal = alphaMin + 1
+            myRepeatingMoves = self.repeatingMovesMax
             if redMoveDir == -1:
                 firstRow = 7
                 lastRow = 0
@@ -304,7 +310,8 @@ class Node:
             currColor = "black"
             otherColor = "red"
             goalSign = -1
-            repeatBaseVal = betaMax
+            repeatBaseVal = betaMax - 1
+            myRepeatingMoves = self.repeatingMovesMin
             if blackMoveDir == 1:
                 firstRow = 0
                 lastRow = 7
@@ -313,7 +320,7 @@ class Node:
                 lastRow = 0
 
         # handles repeating moves here
-        if self.repeatingMoves == True:
+        if myRepeatingMoves == True:
             val = repeatBaseVal
             return val
 
@@ -372,45 +379,6 @@ class Node:
             numMyPtsW = 1000
             numOppntPtsW = 1300
 
-        # elif numMyPts > minColorPts:
-        #     # myPts normal and oppntPts few pts
-        #     # My) number of pieces in first row
-        #     # My) number of pieces in last row
-        #     # My) number of edge pieces (More Weight)
-        #     # My) full first row
-        #     # Oppnt) number of edge pieces (Less Weight)
-        #     # Oppnt) (Average ?) distance of pieces from current color's opponent's pieces
-        #     myEdgePtW = 100
-        #     myFstRowW = 200
-        #     myLstRowW = 100
-        #     myFullFstRowW = 500
-        #     distToOppntPtsW = -30
-        #     oppntEdgePtW = 10
-        #     oppntFstRowW = 0  # not needed
-        #     oppntLstRowW = 0  # not needed
-        #     oppntFullFstRowW = 0  # not needed
-        #     numMyPtsW = 3000
-        #     numOppntPtsW = 3000
-        #
-        # elif numOppntPts > minColorPts:
-        #     # myPts few pts and oppntPts normal
-        #     # My) number of edge pieces (Less Weight)
-        #     # My) (Average ?) distance of pieces from current color's opponent's pieces
-        #     # Oppnt) number of pieces in first row
-        #     # Oppnt) number of pieces in last row
-        #     # Oppnt) number of edge pieces (More Weight)
-        #     # Oppnt) full first row
-        #     myEdgePtW = 10
-        #     myFstRowW = 0  # not needed
-        #     myLstRowW = 0  # not needed
-        #     myFullFstRowW = 0  # not needed
-        #     distToOppntPtsW = -30
-        #     oppntEdgePtW = 100
-        #     oppntFstRowW = 200
-        #     oppntLstRowW = 100
-        #     oppntFullFstRowW = 500
-        #     numMyPtsW = 3000
-        #     numOppntPtsW = 3000
 
         else:
             # both colors haw few points and behave the same
@@ -618,14 +586,32 @@ class Node:
         #     print("howdy")
         # *******
 
+        maxColor = self.maxColor
+        minColor = ""
+        if maxColor == "red":
+            minColor = "black"
+        else:
+            minColor = "red"
         newType = ""
         currColor = ""
+        prevMove = dummyMove
+        prevPrevMove = dummyMove
+        prevRepeatingMoves = False
         if self.type == "max":
-            currColor = "red"
+            currColor = maxColor
             newType = "min"
+            prevMove = self.prevMoveMax
+            prevPrevMove = self.prevPrevMoveMax
+            prevRepeatingMoves = self.repeatingMovesMax
         else:
-            currColor = "black"
+            currColor = minColor
             newType = "max"
+            prevMove = self.prevMoveMin
+            prevPrevMove = self.prevPrevMoveMin
+            prevRepeatingMoves = self.repeatingMovesMin
+            otherPrevMove = self.prevMoveMax
+            otherPrevPrevMove = self.prevPrevMoveMax
+            otherPrevRepeatingMoves = self.prevPrevMoveMax
         newDepth = self.depth + 1
         # find red or black pieces
 
@@ -684,22 +670,22 @@ class Node:
                     queue.append((tempStartPt, newEndPts, newBoard))
 
         #now add all moves to tree
-        prevMove = dummyMove
-        prevPrevMove = dummyMove
-        if self.depth > 0:
-            prevMove = (self.currPt, self.endPts)
-            prevPrevMove = self.prevMove
-        else:
-            prevMove = self.prevMove
-            prevPrevMove = self.prevPrevMove
+        nextPrevMove = dummyMove
+        nextPrevPrevMove = dummyMove
+        # if self.depth > 0:
+        #     nextPrevMove = (self.currPt, self.endPts)
+        #     nextPrevPrevMove = prevMove
+        # else:
+        #     nextPrevMove = prevMove
+        #     nextPrevPrevMove = prevPrevMove
         for move in moves:
             # we need to keep but discourage repeating moves
             repeatingMoves = False
-            if self.repeatingMoves == True:
+            if prevRepeatingMoves == True:
                 repeatingMoves = True
-            if (move[0] == self.prevMove[0]) and (move[1] == self.prevMove[1]):
+            if (move[0] == prevMove[0]) and (move[1] == prevMove[1]):
                 repeatingMoves = True
-            if (move[0] == self.prevPrevMove[0]) and (move[1] == self.prevPrevMove[1]):
+            if (move[0] == prevPrevMove[0]) and (move[1] == prevPrevMove[1]):
                 repeatingMoves = True
             # if repeatingMoves == True:
             #     print("** repeating moves **")
@@ -709,7 +695,32 @@ class Node:
             self.children.append(newInd)
             #parentIndIn, indIn, depthIn, typeIn, currPtIn, endPtsIn, boardIn, treeIn
             # FIXME: CHANGE NODE INIT TO INCLUDE FLAG FOR REPEATING MOVES
-            treeInst.tree.add(newInd, Node(self.ind, newInd, newDepth, newType, move[0], move[1], move[2], treeInst, prevMove, prevPrevMove, repeatingMoves))
+            #def __init__(self, parentIndIn, indIn, depthIn, typeIn, currPtIn, endPtsIn, boardIn, prevMove, prevPrevMove, repeatingMoves):
+            nextPrevMove = (move[0], move[1])
+            nextPrevPrevMove = prevMove
+
+            prevMoveMax = dummyMove
+            prevPrevMoveMax = dummyMove
+            prevMoveMin = dummyMove
+            prevPrevMoveMin = dummyMove
+            repeatingMovesMax = False
+            repeatingMovesMin = False
+            if self.type == "max":
+                prevMoveMax = nextPrevMove
+                prevPrevMoveMax = nextPrevPrevMove
+                prevMoveMin = self.prevMoveMin
+                prevPrevMoveMin = self.prevPrevMoveMin
+                repeatingMovesMax = repeatingMoves
+                repeatingMovesMin = self.repeatingMovesMin
+            else:
+                prevMoveMax = self.prevMoveMax
+                prevPrevMoveMax = self.prevPrevMoveMax
+                prevMoveMin = nextPrevMove
+                prevPrevMoveMin = nextPrevPrevMove
+                repeatingMovesMax = self.repeatingMovesMax
+                repeatingMovesMin = repeatingMoves
+
+            treeInst.tree.add(newInd, Node(self.ind, newInd, newDepth, newType, move[0], move[1], move[2], treeInst, prevMoveMax, prevPrevMoveMax, prevMoveMin, prevPrevMoveMin, repeatingMovesMax, repeatingMovesMin, maxColor))
         return
     def printNode(self):
         print(f"({self.ind}, {self.depth}, {self.type}, {self.val})")
@@ -726,22 +737,25 @@ class Node:
         del self.val
         del self.boardRslt
         del self.visited
-        del self.prevMove
-        del self.prevPrevMove
-        del self.repeatingMoves
+        del self.prevMoveMax
+        del self.prevMoveMin
+        del self.prevPrevMoveMax
+        del self.prevPrevMoveMin
+        del self.repeatingMovesMax
+        del self.repeatingMovesMin
         return
 
 
 class Tree:
     # def __init__(self, boardIn, prevMove, prevPrevMove):
-    def __init__(self, boardIn, prevMove, prevPrevMove):
+    def __init__(self, boardIn, prevMoveMax, prevPrevMoveMax, prevMoveMin, prevPrevMoveMin, maxColor):
         self.tree = Array()
         self.rootInd = 0
         self.nextAvailInd = 1
         #make tree here
         dummyPt = Point(-1, -1)
         #parentIndIn, indIn, depthIn, typeIn, currPtIn, endPtsIn, boardIn, treeIn
-        self.tree.add(0, Node(-1, 0, 0, "max", dummyPt, [dummyPt], boardIn, self, prevMove, prevPrevMove, False))
+        self.tree.add(0, Node(-1, 0, 0, "max", dummyPt, [dummyPt], boardIn, self, prevMoveMax, prevPrevMoveMax, prevMoveMin, prevPrevMoveMin, False, False, maxColor))
         #self.tree.reverse()
         self.currInd = 0
         self.currNode = self.tree.index(0)
@@ -865,13 +879,14 @@ def minimax(nodeInd, tree, alpha, beta):
             # Alpha Beta Pruning
             if beta <= alpha:
                 break
-    #flip repeating moves values
-    if best == alphaMin:
-        best = betaMax
-    elif best == betaMax:
-        best = alphaMin
+
     returnTup = (Point(dummyVal, dummyVal), [dummyVal], dummyVal)
     if node.depth > 0:
+        # flip repeating moves values
+        if best == alphaMin + 1:
+            best = betaMax - 1
+        elif best == betaMax - 1:
+            best = alphaMin + 1
         returnTup = (node.currPt, node.endPts, best)
     else:
         returnTup = (bestCurrPt, bestEndPts, best)
@@ -883,15 +898,11 @@ def minimax(nodeInd, tree, alpha, beta):
 #def minimax(nodeInd, tree, alpha, beta):
 def randomMove(tree):
     tree.visit(tree.rootInd)
-    # ind = randint(1, (tree.nextAvailInd - 1))
-    # tree.visit(ind)
-    # **************************************
     ind = -1
     if tree.nextAvailInd > 1:
         ind = randint(1, (tree.nextAvailInd - 1))
         tree.visit(ind)
     else:
         ind = 0
-    # **************************************
     node = tree.currNode
     return (node.currPt, node.endPts, 0)
