@@ -5,26 +5,16 @@
 # -- Change distance to last row to either distance to most exposed last row piece or open last row space
 
 # FIXME: MUST FIX VALUE FUNCTION TO HAVE AI CAPTURE PIECES WHEN THEY ARE FAR AWAY AT END OF GAME
-# FIXME: Probably need to put more emphasis on kings and being closer to a king and less on edges at end of game
-# FIXME: Also should probably put more weight into capturing pieces at end of game and being closer to pieces
-# FIXME: Also need to check that it works as intended for even and odd numbers
 # FIXME: MUST RESEARCH REINFORCEMENT LEARNING ALGORITHMS AND HOW TO SET REWARDS AND UPDATE FUNCTION
 # FIXME: MUST RESEARCH WHAT OTHER PEOPLE HAVE DONE TO SEE IF I SHOULD USE A LINEAR MODEL OR A NEURAL NETWORK (ALONG WITH STRUCTURE)
-# FIXME: MUST RESTRUCTURE CODE SO RUNS WITHOUT TRIGGERS FOR TRAINING
 # FIXME: MUST TRAIN MODEL VS MINIMAX SEARCH
 # FIXME: MUST LOOKUP WHETHER OR NOT I CAN USE A CHECKERS API TO TEST MY MODEL
 # FIXME: MUST LIMIT USER MOVE CHOICES SO MUST TAKE JUMP IF ONE IS AVAILABLE (ONLY THE AI HAS TO DO THIS NOW)
-# FIXME: MUST END GAME WHEN USER HAS NO LEGAL MOVES LEFT AND HAVE RED WIN
-# FIXME: MUST VALIDATE AND GATHER DATA ON MY MODEL BY TUESDAY EVENING
 # **************************************************************************************
 
-# FIXME: FIX SO MUST TAKE JUMP ON FIRST MOVE IF AVAILABLE (CHECK RULES AND MAKE SURE THIS IS CORRECT AND ALL ARE FOLLOWED)
-
-
 from kivy.app import App
-from kivy.uix.widget import Widget
 from kivy.uix.gridlayout import GridLayout
-from kivy.graphics import Rectangle, Color, Ellipse
+from kivy.graphics import Color
 from kivy.core.window import Window
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.button import Button
@@ -34,12 +24,9 @@ from copy import deepcopy
 from gc import collect
 from sys import argv
 #******************************
-from config import windowSize, rows, cols, redMoveDir, blackMoveDir, pieceSize, redGUIPColor, \
-    blackGUIPColor, dummyColor, lightSqrColor, darkSqrColor, redHighlightColor, blackHighlightColor, \
-    darkSqrHighlightColor, moveLimit, moveRate, blackKingNorm, blackKingHighlight, redKingNorm, \
-    redKingHighlight
+from config import windowSize, rows, cols, redMoveDir, blackMoveDir, pieceSize, dummyColor, \
+    lightSqrColor, darkSqrColor, moveLimit, moveRate
 from point import Point
-from boardCheck import BoardCheck
 from gamePiece import GamePiece, Pawn, King
 from sqr import Sqr
 from referee import Referee
@@ -61,7 +48,6 @@ normalMode = True
 if len(argv) == 2:
     if str(argv[1]) == "random":
         normalMode = False
-
 # *********************************
 
 
@@ -100,10 +86,8 @@ class CheckersGame(GridLayout):
         self.tempCurrPtMin = Point(-1, -1)
         self.tempCurrEndPtsMin = []
 
-        #**************************
         self.redPiecePt = Point(-1, -1)
         self.redEndPts = []
-        #**************************
 
         fstColor = dummyColor
         fstColorName = "None"
@@ -151,9 +135,7 @@ class CheckersGame(GridLayout):
 
 
     def clearPiece(self, pieceIn):
-        #print("Clearning Piece...")
         self.pieces.canvas.remove(pieceIn.shape)
-        #self._entities.remove(entity)
         return
 
     def startingPieces(self, instance):
@@ -173,10 +155,8 @@ class CheckersGame(GridLayout):
         pieceNum = 0
         for y in range(firstY, lastY + 1):
             for x in range(int(cols/2)):
-                #print("Black: (%i, %i)" % (x * 2 + (y % 2), y))
                 self.pieceGrid[x * 2 + (y % 2)][y] = Pawn("black", Point(x * 2 + (y % 2), y), self.pieces.canvas, pieceNum, self.pieceGrid, self.gameGrid)
                 self.blackList.append(pieceNum)
-                #print(self.pieceGrid[x * 2 + (y % 2)][y].type)
                 pieceNum += 1
         #creating red pieces
         if redMoveDir == -1:
@@ -187,10 +167,8 @@ class CheckersGame(GridLayout):
             lastY = 2
         for y in range(firstY, lastY + 1):
             for x in range(int(cols / 2)):
-                #print("Red: (%i, %i)" % (x * 2 + (y % 2), y))
                 self.pieceGrid[x * 2 + (y % 2)][y] = Pawn("red", Point(x * 2 + (y % 2), y), self.pieces.canvas, pieceNum, self.pieceGrid, self.gameGrid)
                 self.redList.append(pieceNum)
-                #print(self.pieceGrid[x * 2 + (y % 2)][y].type)
                 pieceNum += 1
         print("Done creating pieces...")
         self.turn = "black"
@@ -198,15 +176,11 @@ class CheckersGame(GridLayout):
         return
 
     def clearBoard(self, instance):
-        # TODO: Fixed
-        #print("clearBoard Called...")
         #clear all current pieces from board
         # handles pieceGrid, redList, and blackList
-        #self.clearPiece(self.pawn)
         for x in range(cols):
             for y in range(rows):
                 if (self.pieceGrid[x][y].type != "None"):
-                    #print("Calling clearPiece...")
                     self.clearPiece(self.pieceGrid[x][y])
                     self.pieceGrid[x][y] = GamePiece(dummyColor, Point(x, y), self.pieces.canvas, -1, self.pieceGrid, self.gameGrid)
         #now must clear redList and blackList
@@ -231,7 +205,6 @@ class CheckersGame(GridLayout):
             #actual piece is selected
             if (self.pieceGrid[pt.x][pt.y].type != "None"):
                 #game piece and not square
-                #self.pieces.canvas.remove(self.pieceGrid[pt.x][pt.y].shape)
                 if self.pieceGrid[pt.x][pt.y].type == "pawn":
                     self.pieces.canvas.remove(self.pieceGrid[pt.x][pt.y].shape)
                     self.pieces.canvas.add(Color(*self.pieceGrid[pt.x][pt.y].highlightColor))
@@ -276,10 +249,8 @@ class CheckersGame(GridLayout):
         return
 
     def on_touch_down(self, touch):
-        # TODO: must handle color's turns with being able to select stuff
         #will check for possible moves before selecting here
         #will not select if no moves are possible or if its not the color's turn
-        #print("on_touch_down Called...")
         if (touch.x > self.board.pos[0]) and (touch.x < (Window.height - self.board.pos[0])) and (touch.y > self.board.pos[1]) and (touch.y < (Window.height - self.board.pos[1])):
             #determine which square for piece
             #get x pos
@@ -292,7 +263,7 @@ class CheckersGame(GridLayout):
             pt = Point(x, y)
             if self.selectedSqr == Point(-1, -1):
                 if (self.pieceGrid[x][y].type != "None") and (self.isJumping == False):
-                    # print(" * Clicked Piece")
+                    # Clicked Piece"
                     if (self.pieceGrid[x][y].pColor == self.turn):
                         if (self.selected != pt):
                             #select object
@@ -312,24 +283,19 @@ class CheckersGame(GridLayout):
                             #now must deHighlightSqrs() any self.lightSqrs from prev. selection
 
                 else:
-                    # print(" * Clicked Sqr")
+                    # Clicked Sqr
                     #(must be able to select highlighted squares for next move)
                     if pt in self.lightSqrs:
                         # can select square
                         self.selectedSqr = pt
-
                         if self.tempCurrPtMin == Point(-1, -1):
                             self.tempCurrPtMin = self.selected
                         self.tempCurrEndPtsMin.append(pt)
-
-
                         #set self.isJumping to true if jumping here
                         if abs(self.selectedSqr.x - self.selected.x) > 1:
                             #jumping
                             self.isJumping = True
 
-
-            #   #this is where the move piece function will be called
         elif (touch.x > 0) and (touch.x < self.board.pos[0]) and (touch.y > 0) and (touch.y < self.board.pos[1]):
             self.startingPieces("dummy instance")
 
@@ -347,7 +313,6 @@ class CheckersGame(GridLayout):
 
     def pawnToKing(self):
         if self.pieceGrid[self.selected.x][self.selected.y].type == "pawn":
-            #self.delHighlightSqrs()
             samePColor = self.pieceGrid[self.selected.x][self.selected.y].pColor
             samePieceNum = self.pieceGrid[self.selected.x][self.selected.y].pieceNum
             self.pieces.canvas.remove(self.pieceGrid[self.selected.x][self.selected.y].shape)
@@ -362,9 +327,6 @@ class CheckersGame(GridLayout):
 
 
     def movePiece(self):
-        #TODO: HANDLE COLLISIONS
-
-        #print(" * movePiece Called")
         currCenterPt = Point(self.pieceGrid[self.selected.x][self.selected.y].pos[0] + (pieceSize[0] / 2), self.pieceGrid[self.selected.x][self.selected.y].pos[1] + (pieceSize[1] / 2))
         if currCenterPt != self.gameGrid[self.selectedSqr.x][self.selectedSqr.y]:
             # not there yet so keep moving piece
@@ -427,7 +389,6 @@ class CheckersGame(GridLayout):
                 endPts = self.referee.nextJumps(self.selected, self.pieceGrid)
             if not endPts:
                 #executes if was never jumping or is done jumping
-
                 if (self.pieceGrid[self.selected.x][self.selected.y].type != "pawn") or (self.selected.y != self.pieceGrid[self.selected.x][self.selected.y].lastRow):
                     #normal
                     self.deselectObj()
@@ -470,9 +431,7 @@ class CheckersGame(GridLayout):
                 print("   *** RED WON! ***")
                 print("   *** GAME OVER ***")
                 App.get_running_app().stop()
-            #FIXME: CHECK FOR DRAWS
             if self.moveCount == moveLimit:
-                #FIXME: check for draws or too long of a game
                 #no winner!
                 print("   *** MOVE LIMIT EXCEEDED! ***")
                 print("   *** GAME OVER ***")
@@ -495,7 +454,6 @@ class CheckersGame(GridLayout):
                 howCanMoveRslt = self.referee.howCanMove(self.redPiecePt, self.pieceGrid)
                 endPts = howCanMoveRslt[0]
                 if endPts:
-                    #FIXME: ONLY SET NECESSARY VARIABLES AND DON'T HIGHLIGHT SQUARES
                     self.highlightSqrs(endPts)
                 else:
                     print("ERROR!!! CANNOT MOVE HERE")
@@ -510,26 +468,11 @@ class CheckersGame(GridLayout):
             self.redEndPts.pop(0)
             self.redPiecePt = endPt
         else:
-            # ********************************************************************************************
             # executes if AI looses because it has no legal moves available
             print("   *** RED HAS NO LEGAL MOVES ***")
             print("   *** BLACK WON! ***")
             print("   *** GAME OVER ***")
             App.get_running_app().stop()
-
-            # print(" { Red Passes }")
-            #
-            # self.deselectObj()
-            # self.turn = "black"
-            # print(" { Black's Turn }")
-            # self.moveCount += 1
-            # # don't need to check for if someone won
-            # if self.moveCount == moveLimit:
-            #     # no winner!
-            #     print("   *** MOVE LIMIT EXCEEDED! ***")
-            #     print("   *** GAME OVER ***")
-            #     App.get_running_app().stop()
-            # ********************************************************************************************
 
         return
 
@@ -551,13 +494,11 @@ class CheckersGame(GridLayout):
         tree = Tree(self.pieceGrid, self.prevMoveMax, self.prevPrevMoveMax, self.prevMoveMin, self.prevPrevMoveMin, "red")
         alpha = alphaMin
         beta = betaMax
-        #FIXME: ADDED NORMAL AND RANDOM
         bestTup = (0, 0, 0)  # garbage init
         if normalMode == True:
             bestTup = minimax(tree.rootInd, tree, alpha, beta)
         else:
             bestTup = randomMove(tree)
-        # FIXME: DELETES
         del tree
         collect()
         self.redPiecePt = bestTup[0]

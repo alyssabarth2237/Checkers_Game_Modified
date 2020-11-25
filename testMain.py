@@ -1,3 +1,5 @@
+# NOTE: NOT USED IN GAME (OLD CODE)
+
 from minimaxSearch import Tree, minimax, alphaMin, betaMax
 from testFunctions import makeTestBoard, ptListPrintStr
 

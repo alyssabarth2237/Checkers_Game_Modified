@@ -2,7 +2,6 @@
 
 class BoardCheck:
     def __init__(self):
-        #TODO: Must write init for BoardCheck
         self.dummyVar = "na"
 
     def isInvalid(self, pt):

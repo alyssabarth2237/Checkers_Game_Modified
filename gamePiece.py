@@ -87,7 +87,6 @@ class GamePiece(Widget):
 
 class Pawn(GamePiece):
     def __init__(self, pColorIn, locIn, canvasIn, pieceNumIn, pieceGrid, gameGrid):
-        #print("Pawn init Called...")
         super().__init__(pColorIn, locIn, canvasIn, pieceNumIn, pieceGrid, gameGrid)
         self.type = "pawn"
         if pColorIn == "red":
@@ -107,11 +106,9 @@ class Pawn(GamePiece):
             self.guiPColor = blackGUIPColor
             self.highlightColor = blackHighlightColor
         else:
-            #throw error
             self.lastRow = -2
             self.moveDir = -10
             self.guiPColor = dummyColor
-        #pos=(gameGrid[locIn.x][locIn.y].x, gameGrid[locIn.x][locIn.y].y)
 
         if (self.boardCheck.isOpen(pieceGrid, self.loc) == True) and (self.boardCheck.isInvalid(self.loc) == False):
             self.boardCanvas.add(Color(*self.guiPColor))
@@ -119,7 +116,6 @@ class Pawn(GamePiece):
             self.pos = (gameGrid[locIn.x][locIn.y].x - (pieceSize[0] / 2), gameGrid[locIn.x][locIn.y].y - (pieceSize[1] / 2))
             self.boardCanvas.add(self.shape)
         else:
-            #throw error
             print('error')
 
     @property
@@ -150,12 +146,9 @@ class King(GamePiece):
             self.guiPColor = blackKingNorm
             self.highlightColor = blackKingHighlight
         else:
-            #throw error
             self.lastRow = -2
             self.moveDir = -10
             self.guiPColor = dummyColor
-
-        #************************
 
         if (self.boardCheck.isOpen(pieceGrid, self.loc) == True) and (self.boardCheck.isInvalid(self.loc) == False):
             self.boardCanvas.add(Color(*dummyColor))
@@ -163,7 +156,6 @@ class King(GamePiece):
             self.pos = (gameGrid[locIn.x][locIn.y].x - (pieceSize[0] / 2), gameGrid[locIn.x][locIn.y].y - (pieceSize[1] / 2))
             self.boardCanvas.add(self.shape)
         else:
-            #throw error
             print('error')
 
     @property

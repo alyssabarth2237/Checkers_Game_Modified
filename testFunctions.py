@@ -1,3 +1,5 @@
+# NODE: ONLY PRINT FUNCTION USED IN GAME (THE REST IS FOR testMain.py)
+
 from config import dummyColor, rows, cols, blackMoveDir, redMoveDir
 from point import Point
 from gamePiece import GamePiece
@@ -86,20 +88,6 @@ def makeTestBoard():
                 redPoints.append(Point(x * 2 + (y % 2), y))
     pieceGrid[0][4] = VirtualPiece("red", Point(0, 4), "canvas", -1, pieceGrid, "gameGrid")
     redPoints.append(Point(0, 4))
-
-    # for y in range(firstY, lastY + 1):
-    #     for x in range(int(cols / 2)):
-    #         pieceGrid[x * 2 + (y % 2)][y] = VirtualPiece("black", Point(x * 2 + (y % 2), y), "canvas", -1, pieceGrid, "gameGrid")
-    # # creating red pieces
-    # if redMoveDir == -1:
-    #     firstY = 5
-    #     lastY = 7
-    # else:
-    #     firstY = 0
-    #     lastY = 2
-    # for y in range(firstY, lastY + 1):
-    #     for x in range(int(cols / 2)):
-    #         pieceGrid[x * 2 + (y % 2)][y] = VirtualPiece("red", Point(x * 2 + (y % 2), y), "canvas", -1, pieceGrid, "gameGrid")
 
     blackStr = "[ "
     for blackPt in blackPoints:
